@@ -123,24 +123,20 @@ sve računa **u memoriji**, bez ijednog persistovanog međufajla:
    `predict_proba`)
 4. [x] Napisati `src/jev_client.py` (poziv preko `TypeSafeClient` +
    `Noul` tipizovana šema + merenje latencije)
-5. [ ] **Ručni smoke-test sa pravim API ključem** — kod je proveren do
-   mrežnog poziva (sa lažnim ključem dobijena očekivana 401 greška sa
-   pravog endpoint-a `api.typesafe.ai`), ali pravi odgovor Jev-a nije
-   viđen. **Ovo treba korisnik da pokrene** (videti "Sledeći koraci"
-   ispod).
+5. [x] **Ručni smoke-test sa pravim API ključem** — 2 ručno unesena
+   pacijenta, oba predikcije klinicki smislena (Age 63/ASY/ST_Slope Down
+   -> rizik 0.83; Age 37/NAP/ST_Slope Up -> rizik 0.32).
 6. [x] Napisati `src/compare_jev.py` (import postojeće
    `load_and_preprocess_data()` za skalirani test skup + lokalna pomoćna
    funkcija za sirovi test skup, sklearn evaluacija, Jev evaluacija,
    zajednička `_izracunaj_metrike` funkcija, latencija). Provereno: sirovi
-   i skalirani test skup se savršeno poklapaju (92 test pacijenta),
-   sklearn evaluacija radi (precision 0.93, accuracy 0.87, recall 0.82,
-   F1 0.88).
-7. [ ] Pokrenuti punu evaluaciju (`python compare_jev.py` iz `src/`),
-   generisati `src/results/jev_comparison.txt` — **zahteva pravi API
-   ključ, korisnik pokreće**
-8. [ ] Napisati README sekciju "Model Comparison: LogisticRegression vs.
-   Jev" — metodologija (uključujući napomenu o zero-shot pristupu za Jev),
-   uporedna tabela metrika + latencije, kratak zaključak
+   i skalirani test skup se savršeno poklapaju (92 test pacijenta).
+7. [x] Pokrenuti punu evaluaciju — rezultat u `src/results/jev_comparison.txt`:
+   LogisticRegression precision 0.93 / accuracy 0.87 / recall 0.82 / F1 0.88
+   / ~0.15ms; Jev precision 0.75 / accuracy 0.79 / recall 0.94 / F1 0.83 /
+   ~310ms.
+8. [x] Napisati README sekciju "Model Comparison: LogisticRegression vs.
+   Jev" — metodologija, uporedna tabela, zaključak.
 9. [ ] Review rezultata sa korisnikom pre merge-a
 10. [ ] Merge `feature/jev-comparison` → `master`
 
