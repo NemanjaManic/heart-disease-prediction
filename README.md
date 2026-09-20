@@ -182,3 +182,9 @@ practical maximum for this single-call-per-patient design.
   `python src/compare_jev_fewshot.py` (few-shot, example count via the
   `broj_primera_po_klasi` parameter); the raw reports are at
   `src/results/jev_comparison.txt` and `src/results/jev_fewshot_comparison.txt`.
+* **Total cost:** all of the experimentation above — smoke tests, all four
+  full 92-patient runs, and the context-window calibration calls used to
+  find the ~362-example ceiling — cost **$0.2512** via the TypeSafe API.
+  Even with that calibration overhead included, this is a good
+  illustration of how cheap Jev's per-request pricing is, including for
+  the largest (350-example) few-shot prompts.
