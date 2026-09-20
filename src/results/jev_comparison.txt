@@ -1,0 +1,13 @@
+
+==================================================
+Vreme: 2026-09-20 08:52:42
+Test skup: 92 pacijenata (heart.csv, random_state=42, test_size=0.1)
+Jev model: jev-latest
+Metodologija: Jev dobija samo sirove klinicke podatke jednog
+pacijenta po pozivu (zero-shot, bez uvida u train skup, bez
+few-shot primera i bez fine-tuninga).
+==================================================
+Model                | Precision | Accuracy | Recall |     F1 |     Latencija (ms)
+----------------------------------------------------------------------------------
+LogisticRegression   |      0.93 |     0.87 |   0.82 |   0.88 |               0.15
+jev-latest           |      0.75 |     0.79 |   0.94 |   0.83 |             310.53
