@@ -53,6 +53,40 @@ def klasifikuj_pacijenta(client, obelezja: dict) -> JevRezultat:
     return JevRezultat(predikcija=predikcija, verovatnoca=verovatnoca, latencija_ms=latencija_ms)
 
 
+def _formatiraj_primer(obelezja: dict, dijagnoza: int) -> str:
+    opis = ", ".join(f"{naziv}={_formatiraj_vrednost(vrednost)}" for naziv, vrednost in obelezja.items())
+    return f"{opis} -> HeartDisease: {dijagnoza}"
+
+
+def klasifikuj_sa_primerima(client, obelezja: dict, primeri: list) -> JevRezultat:
+    """Isto kao klasifikuj_pacijenta, ali state sadrzi i few-shot primere iz
+    train skupa (lista (obelezja_dict, dijagnoza) parova) pre pacijenta koji
+    se klasifikuje."""
+    linije_primera = [
+        f"{i + 1}. {_formatiraj_primer(o, d)}" for i, (o, d) in enumerate(primeri)
+    ]
+    stanje = (
+        "Primeri iz istorije (dijagnoza je vec poznata, samo za referencu):\n"
+        + "\n".join(linije_primera)
+        + "\n\nPacijent za klasifikaciju (dijagnoza NIJE poznata):\n"
+        + "\n".join(f"{naziv}: {_formatiraj_vrednost(vrednost)}" for naziv, vrednost in obelezja.items())
+    )
+
+    pocetak = time.perf_counter()
+    odgovor = client.system_one(
+        state=stanje,
+        questions={
+            "srcana_bolest": Noul(instructions=UPUTSTVO, criteria=KRITERIJUMI),
+        },
+    )
+    latencija_ms = (time.perf_counter() - pocetak) * 1000
+
+    verovatnoca = odgovor.nouls["srcana_bolest"].noul
+    predikcija = int(verovatnoca >= 0.5)
+
+    return JevRezultat(predikcija=predikcija, verovatnoca=verovatnoca, latencija_ms=latencija_ms)
+
+
 if __name__ == "__main__":
     # Rucni smoke-test: python jev_client.py (pokrenuti iz src/, sa .env popunjenim)
     from dotenv import load_dotenv
