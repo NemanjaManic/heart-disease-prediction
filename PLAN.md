@@ -114,29 +114,51 @@ sve računa **u memoriji**, bez ijednog persistovanog međufajla:
 
 ## Koraci (checklist)
 
-1. [ ] `git checkout -b feature/jev-comparison`
-2. [ ] Dodati `.env` u `.gitignore`, napraviti `.env.example`
-3. [ ] Dodati `python-dotenv`, `requests` u `requirements.txt`
-4. [ ] Napisati `src/jev_client.py` (poziv + tipizovana šema + retry +
-   merenje latencije)
-5. [ ] Ručni smoke-test `jev_client.py` na 2-3 ručno uneta pacijenta,
-   proveriti da parsiranje odgovora radi
-6. [ ] Napisati `src/compare_jev.py` (import postojeće
+1. [x] `git checkout -b feature/jev-comparison`
+2. [x] Dodati `.env` u `.gitignore`, napraviti `.env.example`
+3. [x] Dodati `python-dotenv`, `typesafe-sdk` u `requirements.txt`
+   (koristi se zvanični TypeSafe Python SDK umesto ručnih `requests`
+   poziva — postoji tipizovan `Noul` primitiv koji tačno odgovara
+   binarnoj klasifikaciji i vraća verovatnoću 0-1, isto kao
+   `predict_proba`)
+4. [x] Napisati `src/jev_client.py` (poziv preko `TypeSafeClient` +
+   `Noul` tipizovana šema + merenje latencije)
+5. [ ] **Ručni smoke-test sa pravim API ključem** — kod je proveren do
+   mrežnog poziva (sa lažnim ključem dobijena očekivana 401 greška sa
+   pravog endpoint-a `api.typesafe.ai`), ali pravi odgovor Jev-a nije
+   viđen. **Ovo treba korisnik da pokrene** (videti "Sledeći koraci"
+   ispod).
+6. [x] Napisati `src/compare_jev.py` (import postojeće
    `load_and_preprocess_data()` za skalirani test skup + lokalna pomoćna
    funkcija za sirovi test skup, sklearn evaluacija, Jev evaluacija,
-   zajednička `compute_metrics` funkcija, latencija)
-7. [ ] Pokrenuti punu evaluaciju, generisati
-   `src/results/jev_comparison.txt` (uporedna tabela) + opciono `.json`
+   zajednička `_izracunaj_metrike` funkcija, latencija). Provereno: sirovi
+   i skalirani test skup se savršeno poklapaju (92 test pacijenta),
+   sklearn evaluacija radi (precision 0.93, accuracy 0.87, recall 0.82,
+   F1 0.88).
+7. [ ] Pokrenuti punu evaluaciju (`python compare_jev.py` iz `src/`),
+   generisati `src/results/jev_comparison.txt` — **zahteva pravi API
+   ključ, korisnik pokreće**
 8. [ ] Napisati README sekciju "Model Comparison: LogisticRegression vs.
    Jev" — metodologija (uključujući napomenu o zero-shot pristupu za Jev),
    uporedna tabela metrika + latencije, kratak zaključak
 9. [ ] Review rezultata sa korisnikom pre merge-a
 10. [ ] Merge `feature/jev-comparison` → `master`
 
-## Otvoreno / za proveru pri implementaciji
+## Rešeno tokom implementacije
 
-- Tačan naziv env varijable i format Vercel AI Gateway REST poziva za Jev
-  (proveriti trenutnu dokumentaciju u trenutku implementacije — API je nov
-  i može se menjati).
-- Da li Jev vraća i confidence/probability (za eventualno poređenje ROC-AUC
-  pored praga 0/1), ili samo tvrdu labelu.
+- Koristi se zvanični `typesafe-sdk` (PyPI, v0.7.0+) umesto ručnih
+  `requests` poziva — `TypeSafeClient(model=...).system_one(state=...,
+  questions={"kljuc": Noul(instructions=..., criteria=NoulCriteria(...))})`.
+  Env varijabla: `TYPESAFE_API_KEY` (SDK je čita automatski).
+  Direktan endpoint (potvrđeno u praksi): `https://api.typesafe.ai/v1/systemone`.
+- Jev **vraća verovatnoću** (`response.nouls["kljuc"].noul`, float 0-1) —
+  ne samo tvrdu labelu — pa se prag 0.5 primenjuje ručno, isto kao
+  `predict_proba` kod sklearn modela. Napomena: dokumentacija na
+  docs.typesafe.ai pominje `response.answers[...]`, ali instalirana verzija
+  SDK-a koristi `response.nouls[...]` (i `.choices`, `.scores` za druge
+  tipove pitanja) — proveriti pri budućim izmenama da se SDK verzija nije
+  promenila.
+- Ako se ipak koristi Vercel AI Gateway umesto direktnog TypeSafe naloga:
+  `.env.example` sadrži opciju sa `TYPESAFE_BASE_URL` i drugačijim nazivom
+  modela — nije testirano u ovoj implementaciji (testiran je samo direktan
+  TypeSafe pristup).
