@@ -158,7 +158,15 @@ sve računa **u memoriji**, bez ijednog persistovanog međufajla:
   SDK-a koristi `response.nouls[...]` (i `.choices`, `.scores` za druge
   tipove pitanja) — proveriti pri budućim izmenama da se SDK verzija nije
   promenila.
-- Ako se ipak koristi Vercel AI Gateway umesto direktnog TypeSafe naloga:
-  `.env.example` sadrži opciju sa `TYPESAFE_BASE_URL` i drugačijim nazivom
-  modela — nije testirano u ovoj implementaciji (testiran je samo direktan
-  TypeSafe pristup).
+- **Vercel AI Gateway odbačen kao primarni put**: Vercel-ova dokumentacija
+  eksplicitno kaže da se `evaluate`/Jev funkcionalnost izlaže **samo kroz
+  JavaScript `ai` SDK**, ne kroz REST/OpenAI-kompatibilan endpoint
+  ("Evaluation is unavailable through an OpenAI-compatible client"). Ovo je
+  potvrđeno i sopstvenim korisnikovim GitHub Action projektom
+  (`ci-gatekeeper-bot-jev`), koji poziva Jev preko Vercela isključivo iz
+  TypeScript/Node koda (`experimental_evaluate` iz paketa `ai`), ne iz
+  Pythona.
+- **Odluka:** koristi se direktan TypeSafe API (korisnik ima nalog/pristup).
+  Ako se iz nekog razloga pokaže da ne radi, fallback je mali Node.js most
+  (skript po uzoru na `jev.ts` iz pomenutog projekta) koji Python poziva
+  kao subprocess po pacijentu — ali to nije trenutni plan.
