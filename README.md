@@ -131,35 +131,54 @@ task.
 * **Latency:** average wall-clock time per single prediction — local
   in-process inference (LogisticRegression) vs. a network API call (Jev).
 
-A second experiment gave Jev a **few-shot** version of the same task: 30
-labeled patients sampled from the training set (15 with heart disease, 15
-without, fixed seed) are prepended to the state as reference examples
+Follow-up experiments gave Jev a **few-shot** version of the same task:
+labeled patients sampled from the training set (balanced across both
+classes, fixed seed) are prepended to the state as reference examples
 before each test patient is classified. Jev still never sees the *test*
 labels, and there is no fine-tuning — the training data only ever appears
 as in-context text, the same training set LogisticRegression was fit on.
 
+We also tried to hand Jev the **entire** training set (825 patients) to see
+whether more context keeps closing the gap. It doesn't fit: Jev's model has
+a 32,000-token context window, and a single call already fails with a
+`max_tokens_exceeded` error above **~362 examples** (binary-searched
+directly against the API). 350 examples (safely under that ceiling) is the
+practical maximum for this single-call-per-patient design.
+
 ### Results
 
-| Model                         | Precision | Accuracy | Recall | F1   | Avg. latency |
-|-------------------------------|-----------|----------|--------|------|--------------|
-| LogisticRegression             |      0.93 |     0.87 |   0.82 | 0.88 |      ~0.15ms |
-| Jev, zero-shot                 |      0.75 |     0.79 |   0.94 | 0.83 |     ~310ms   |
-| Jev, few-shot (30 examples)    |      0.85 |     0.84 |   0.86 | 0.85 |     ~340ms   |
+| Model                          | Precision | Accuracy | Recall | F1   | Avg. latency |
+|--------------------------------|-----------|----------|--------|------|--------------|
+| LogisticRegression              |      0.93 |     0.87 |   0.82 | 0.88 |      ~0.15ms |
+| Jev, zero-shot                  |      0.75 |     0.79 |   0.94 | 0.83 |     ~310ms   |
+| Jev, few-shot (30 examples)     |      0.85 |     0.84 |   0.86 | 0.85 |     ~340ms   |
+| Jev, few-shot (300 examples)    |      0.88 |     0.85 |   0.84 | 0.86 |     ~441ms   |
+| Jev, few-shot (350, near max)   |      0.91 |     0.85 |   0.80 | 0.85 |     ~482ms   |
 
 ### Takeaways
 
-* **LogisticRegression is still the most balanced and by far the fastest**
-  (roughly 2000x faster than either Jev variant), since it runs locally
-  with no network round-trip — it remains the right choice for the
+* **LogisticRegression wins outright, even against Jev's practical
+  maximum context**: it has the best accuracy, recall, and F1 of every
+  row above, and it's roughly 2000-3000x faster since it runs locally
+  with no network round-trip. It remains the right choice for the
   production API.
-* **Few-shot narrows the gap substantially**: seeing 30 labeled examples
-  from the training set pushed Jev's precision from 0.75 to 0.85 and
-  accuracy from 0.79 to 0.84, at the cost of a few points of recall (0.94
-  → 0.86) and a modest latency increase (~310ms → ~340ms) from the larger
-  prompt.
-* **Zero-shot Jev is the most "sensitive"** (highest recall) — useful if
-  missing an at-risk patient is much costlier than a false alarm — but it
-  has the weakest precision and accuracy of the three.
+* **More few-shot examples trade recall for precision, monotonically.**
+  As the example count grows (0 → 30 → 300 → 350), precision climbs
+  steadily (0.75 → 0.85 → 0.88 → 0.91, nearly matching
+  LogisticRegression's 0.93) while recall falls just as steadily
+  (0.94 → 0.86 → 0.84 → 0.80). Accuracy and F1 peak in the middle
+  (30-300 examples) rather than at the maximum — throwing more examples
+  at Jev is not simply "better."
+* **The full training set does not fit.** This is a hard architectural
+  limit of Jev's context window (32k tokens), not a choice — see above.
+  A production system needing more context than that would need a
+  different approach (e.g. retrieval of only the most relevant examples
+  per patient, or a model with a larger context window), which is out of
+  scope for this experiment.
+* **Zero-shot Jev is the most "sensitive"** (highest recall of all Jev
+  variants) — useful if missing an at-risk patient is much costlier than
+  a false alarm — but it has the weakest precision and accuracy.
 * Reproduce these with `python src/compare_jev.py` (zero-shot) and
-  `python src/compare_jev_fewshot.py` (few-shot); the raw reports are at
+  `python src/compare_jev_fewshot.py` (few-shot, example count via the
+  `broj_primera_po_klasi` parameter); the raw reports are at
   `src/results/jev_comparison.txt` and `src/results/jev_fewshot_comparison.txt`.
