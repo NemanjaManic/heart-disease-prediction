@@ -24,3 +24,16 @@ Model                    | Precision | Accuracy | Recall |     F1 |     Latencij
 --------------------------------------------------------------------------------------
 LogisticRegression       |      0.93 |     0.87 |   0.82 |   0.88 |               0.14
 jev-latest (few-shot)    |      0.88 |     0.85 |   0.84 |   0.86 |             441.31
+
+==================================================
+Vreme: 2026-09-20 09:08:59
+Test skup: 92 pacijenata (heart.csv, random_state=42, test_size=0.1)
+Jev model: jev-latest
+Metodologija: Jev dobija 350 few-shot primera iz train
+skupa (stratifikovano, 175 po klasi, seed=7)
+uz svaki poziv, pre nego sto klasifikuje jednog test pacijenta.
+==================================================
+Model                    | Precision | Accuracy | Recall |     F1 |     Latencija (ms)
+--------------------------------------------------------------------------------------
+LogisticRegression       |      0.93 |     0.87 |   0.82 |   0.88 |               0.13
+jev-latest (few-shot)    |      0.91 |     0.85 |   0.80 |   0.85 |             481.76
