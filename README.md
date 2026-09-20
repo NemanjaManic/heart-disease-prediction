@@ -104,3 +104,51 @@ Once the server is running, FastAPI automatically generates interactive Swagger 
   "verovatnoca_bolesti": 0.9999
 }
 ```
+
+---
+
+## Model Comparison: LogisticRegression vs. Jev (TypeSafe AI)
+
+As an experiment, the deployed LogisticRegression model was compared against
+**Jev**, TypeSafe AI's fast "System One" decision/classification model
+(accessed directly via the TypeSafe API), on the exact same classification
+task.
+
+### Methodology
+
+* **Test set:** the same 92 patients (10% held-out split, `random_state=42`)
+  used to evaluate the deployed model.
+* **Zero-shot for Jev:** Jev received only the raw clinical values of a
+  single patient per call. It had **no access to the training set, no
+  few-shot examples, and no fine-tuning** — it decides purely from its own
+  general knowledge and the typed question schema. This is an intentional
+  asymmetry versus LogisticRegression (which *is* trained on the training
+  set); the comparison is fair in the sense that both models see the same
+  test instances and neither sees the answers in advance, not in the sense
+  of an identical learning approach.
+* **Identical metrics:** the same precision/accuracy/recall/F1 computation
+  is applied to both models' predictions.
+* **Latency:** average wall-clock time per single prediction — local
+  in-process inference (LogisticRegression) vs. a network API call (Jev).
+
+### Results
+
+| Model              | Precision | Accuracy | Recall | F1   | Avg. latency |
+|--------------------|-----------|----------|--------|------|--------------|
+| LogisticRegression |      0.93 |     0.87 |   0.82 | 0.88 |      ~0.15ms |
+| Jev (jev-latest)   |      0.75 |     0.79 |   0.94 | 0.83 |     ~310ms   |
+
+### Takeaways
+
+* **LogisticRegression is more balanced** (higher precision and accuracy)
+  and roughly **2000x faster**, since it runs locally with no network
+  round-trip — it remains the better choice for the production API.
+* **Jev has notably higher recall**, meaning it flags more of the truly
+  at-risk patients, at the cost of more false positives. In a screening
+  context where missing a sick patient is costlier than a false alarm,
+  that trade-off could be attractive — but it comes with materially lower
+  precision and ~2000x the per-prediction latency and cost of the trained
+  model.
+* Reproduce this comparison with `python src/compare_jev.py` (see
+  `src/jev_client.py` and `src/compare_jev.py`); the raw report is at
+  `src/results/jev_comparison.txt`.
