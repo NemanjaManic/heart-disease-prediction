@@ -108,7 +108,7 @@ def _sacuvaj_izvestaj(n, broj_primera, jev_model, metrike_sklearn, latencija_skl
     print(tabela, end="")
 
 
-def uporedi_modele_fewshot(jev_model: str = None):
+def uporedi_modele_fewshot(jev_model: str = None, broj_primera_po_klasi: int = BROJ_PRIMERA_PO_KLASI):
     jev_model = jev_model or os.getenv("JEV_MODEL", "jev-latest")
 
     _, x_test_skalirano, _, y_test = load_and_preprocess_data()
@@ -119,7 +119,7 @@ def uporedi_modele_fewshot(jev_model: str = None):
         "parametri split-a u ovoj funkciji isti kao u data_preprocessing.py"
     )
 
-    primeri = _izaberi_fewshot_primere(x_train_sirovo, y_train_sirovo)
+    primeri = _izaberi_fewshot_primere(x_train_sirovo, y_train_sirovo, po_klasi=broj_primera_po_klasi)
 
     y_pred_sklearn, latencija_sklearn = _oceni_sklearn_model(x_test_skalirano)
     y_pred_jev, latencija_jev = _oceni_jev_fewshot(x_test_sirovo, primeri, jev_model)
