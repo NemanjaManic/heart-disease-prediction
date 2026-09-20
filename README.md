@@ -131,24 +131,35 @@ task.
 * **Latency:** average wall-clock time per single prediction — local
   in-process inference (LogisticRegression) vs. a network API call (Jev).
 
+A second experiment gave Jev a **few-shot** version of the same task: 30
+labeled patients sampled from the training set (15 with heart disease, 15
+without, fixed seed) are prepended to the state as reference examples
+before each test patient is classified. Jev still never sees the *test*
+labels, and there is no fine-tuning — the training data only ever appears
+as in-context text, the same training set LogisticRegression was fit on.
+
 ### Results
 
-| Model              | Precision | Accuracy | Recall | F1   | Avg. latency |
-|--------------------|-----------|----------|--------|------|--------------|
-| LogisticRegression |      0.93 |     0.87 |   0.82 | 0.88 |      ~0.15ms |
-| Jev (jev-latest)   |      0.75 |     0.79 |   0.94 | 0.83 |     ~310ms   |
+| Model                         | Precision | Accuracy | Recall | F1   | Avg. latency |
+|-------------------------------|-----------|----------|--------|------|--------------|
+| LogisticRegression             |      0.93 |     0.87 |   0.82 | 0.88 |      ~0.15ms |
+| Jev, zero-shot                 |      0.75 |     0.79 |   0.94 | 0.83 |     ~310ms   |
+| Jev, few-shot (30 examples)    |      0.85 |     0.84 |   0.86 | 0.85 |     ~340ms   |
 
 ### Takeaways
 
-* **LogisticRegression is more balanced** (higher precision and accuracy)
-  and roughly **2000x faster**, since it runs locally with no network
-  round-trip — it remains the better choice for the production API.
-* **Jev has notably higher recall**, meaning it flags more of the truly
-  at-risk patients, at the cost of more false positives. In a screening
-  context where missing a sick patient is costlier than a false alarm,
-  that trade-off could be attractive — but it comes with materially lower
-  precision and ~2000x the per-prediction latency and cost of the trained
-  model.
-* Reproduce this comparison with `python src/compare_jev.py` (see
-  `src/jev_client.py` and `src/compare_jev.py`); the raw report is at
-  `src/results/jev_comparison.txt`.
+* **LogisticRegression is still the most balanced and by far the fastest**
+  (roughly 2000x faster than either Jev variant), since it runs locally
+  with no network round-trip — it remains the right choice for the
+  production API.
+* **Few-shot narrows the gap substantially**: seeing 30 labeled examples
+  from the training set pushed Jev's precision from 0.75 to 0.85 and
+  accuracy from 0.79 to 0.84, at the cost of a few points of recall (0.94
+  → 0.86) and a modest latency increase (~310ms → ~340ms) from the larger
+  prompt.
+* **Zero-shot Jev is the most "sensitive"** (highest recall) — useful if
+  missing an at-risk patient is much costlier than a false alarm — but it
+  has the weakest precision and accuracy of the three.
+* Reproduce these with `python src/compare_jev.py` (zero-shot) and
+  `python src/compare_jev_fewshot.py` (few-shot); the raw reports are at
+  `src/results/jev_comparison.txt` and `src/results/jev_fewshot_comparison.txt`.
