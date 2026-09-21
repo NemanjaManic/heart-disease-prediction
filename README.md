@@ -149,7 +149,7 @@ practical maximum for this single-call-per-patient design.
 
 | Model                          | Precision | Accuracy | Recall | F1   | Avg. latency |
 |--------------------------------|-----------|----------|--------|------|--------------|
-| LogisticRegression              |      0.93 |     0.87 |   0.82 | 0.88 |      ~0.15ms |
+| LogisticRegression              |      0.93 |     0.87 |   0.82 | 0.87 |      ~0.15ms |
 | Jev, zero-shot                  |      0.75 |     0.79 |   0.94 | 0.83 |     ~310ms   |
 | Jev, few-shot (30 examples)     |      0.85 |     0.84 |   0.86 | 0.85 |     ~340ms   |
 | Jev, few-shot (300 examples)    |      0.88 |     0.85 |   0.84 | 0.86 |     ~441ms   |
